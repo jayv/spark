@@ -423,6 +423,12 @@ private[spark] class MesosClusterScheduler(
       "--driver-cores", desc.cores.toString,
       "--driver-memory", s"${desc.mem}M")
 
+    val replicatedOptionsBlacklist = Set(
+      "spark.jars", // Avoids duplicate classes in classpath
+      "spark.submit.deployMode", // this would be set to `cluster`, but we need client
+      "spark.master" // this contains the address of the dispatcher, not master
+    )
+
     // Assume empty main class means we're running python
     if (!desc.command.mainClass.equals("")) {
       options ++= Seq("--class", desc.command.mainClass)
@@ -440,6 +446,9 @@ private[spark] class MesosClusterScheduler(
         .mkString(",")
       options ++= Seq("--py-files", formattedFiles)
     }
+    desc.schedulerProperties
+      .filter { case (key, _) => !replicatedOptionsBlacklist.contains(key) }
+      .foreach { case (key, value) => options ++= Seq("--conf", s"""$key="$value"""") }
     options
   }
 
