@@ -75,6 +75,14 @@ private[spark] object Utils extends Logging {
   private val MAX_DIR_CREATION_ATTEMPTS: Int = 10
   @volatile private var localRootDirs: Array[String] = null
 
+  /**
+    *
+    * @return whether it is local mode
+    */
+  def isLocalMaster(conf: SparkConf): Boolean = {
+    val master = conf.get("spark.master", "")
+    master == "local" || master.startsWith("local[")
+  }
 
   /** Serialize an object using Java serialization */
   def serialize[T](o: T): Array[Byte] = {

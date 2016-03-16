@@ -94,6 +94,16 @@ class SparkContext(config: SparkConf) extends Logging with ExecutorAllocationCli
 
   private[spark] val stopped: AtomicBoolean = new AtomicBoolean(false)
 
+  override def getExecutorIds(): Seq[String] = {
+    schedulerBackend match {
+      case b: CoarseGrainedSchedulerBackend =>
+        b.getExecutorIds()
+      case _ =>
+        logWarning("Requesting executors is only supported in coarse-grained mode")
+        Nil
+    }
+  }
+
   private def assertNotStopped(): Unit = {
     if (stopped.get()) {
       val activeContext = SparkContext.activeContext.get()
